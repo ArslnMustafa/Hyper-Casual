@@ -12,6 +12,8 @@ public class LevelController : MonoBehaviour
     public GameObject startMenu, gameMenu, gameOverMenu, finishMenu;
     public Text scoreText, finishScoreText, currentLevelText, nextLevelText;
     // Start is called before the first frame update
+    public AudioSource gameMusicAudioSource;
+    public AudioClip victoryAudioClip, gameOverAudioClip;
     public Slider levelProgressBar;
     public float maxDistance;
     public GameObject finishLine;
@@ -31,6 +33,7 @@ public class LevelController : MonoBehaviour
             currentLevelText.text = (currentLevel + 1).ToString();
             nextLevelText.text = (currentLevel + 2).ToString();
         }
+        gameMusicAudioSource = Camera.main.GetComponent<AudioSource>();
     }
 
     // Update is called once per frame
@@ -59,10 +62,12 @@ public class LevelController : MonoBehaviour
     }
     public void LoadNextLevel()
     {
-        SceneManager.LoadScene("Level " + currentLevel + 1);
+        SceneManager.LoadScene("Level " + (currentLevel + 1));
     }
     public void GameOver()
     {
+        gameMusicAudioSource.Stop();
+        gameMusicAudioSource.PlayOneShot(gameOverAudioClip);
         gameMenu.SetActive(false);
         gameOverMenu.SetActive(true);
         gameActive = false;
@@ -70,7 +75,9 @@ public class LevelController : MonoBehaviour
     }
     public void FinishGame()
     {
-        PlayerPrefs.SetInt("currentLevel", currentLevel + 1);
+        gameMusicAudioSource.Stop();
+        gameMusicAudioSource.PlayOneShot(victoryAudioClip);
+        PlayerPrefs.SetInt("currentLevel", (currentLevel + 1));
         finishScoreText.text = score.ToString();
         gameMenu.SetActive(false);
         finishMenu.SetActive(true);

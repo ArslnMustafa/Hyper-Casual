@@ -10,17 +10,19 @@ public class PlayerController : MonoBehaviour
     public float runningSpeed;
     public float xSpeed;
     private float _currentRunningSpeed;
-
     public GameObject ridingCylinderPrefeb;
     public List<RidingCylinder> cylinders;
     private bool _spawningBridge;
     public GameObject bridgePiecePrefab;
     private BridgeSpawner _bridgeSpawner;
     private float _creatingBridgeTimer;
-
     public Animator animator;
     private bool _finished;
-    private float _scoreTimer;
+    private float _scoreTimer=0;
+    private float _lastTouchedX;
+    private float _dropSoundTimer;
+    public AudioSource cylinderAudioSource;
+    public AudioClip gatherAudioClip, dropAudioClip;
 
 
     // Start is called before the first frame update
@@ -31,7 +33,7 @@ public class PlayerController : MonoBehaviour
     }
 
     // Update is called once per frame
-    async void Update()
+    void Update()
     {
         if (LevelController.Current == null || !LevelController.Current.gameActive)
         {
@@ -57,11 +59,12 @@ public class PlayerController : MonoBehaviour
 
         if (_spawningBridge)
         {
+            PlayDropSound();
             _creatingBridgeTimer -= Time.deltaTime;
             if (_creatingBridgeTimer < 0)
             {
                 _creatingBridgeTimer = 0.01f;
-                IncerementClinderVolume(-0.01f);
+                IncerementClinderVolume(-0.1f);
                 GameObject createdBridgePiece = Instantiate(bridgePiecePrefab);
                 Vector3 direction = _bridgeSpawner.endReference.transform.position - _bridgeSpawner.startReference.transform.position;
                 float distance = direction.magnitude;
@@ -96,6 +99,8 @@ public class PlayerController : MonoBehaviour
     {
         if (other.tag == "AddCylinder")
         {
+            //------------------------------------------
+            cylinderAudioSource.PlayOneShot(gatherAudioClip,0.1f);
             IncerementClinderVolume(0.1f);
             Destroy(other.gameObject);
         }
@@ -119,9 +124,13 @@ public class PlayerController : MonoBehaviour
     }
     private void OnTriggerStay(Collider other)
     {
-        if (other.tag == "Trap")
+        if (LevelController.Current.gameActive)
         {
+            if (other.tag == "Trap")
+            {
+            PlayDropSound();
             IncerementClinderVolume(-Time.fixedDeltaTime);
+            }
         }
     }
 
@@ -143,7 +152,7 @@ public class PlayerController : MonoBehaviour
                 }
                 else
                 {
-                    LevelController.Current.GameOver();
+                    Die();
                 }
                 //gameover
             }
@@ -152,6 +161,15 @@ public class PlayerController : MonoBehaviour
         {
             cylinders[cylinders.Count - 1].IncerementCylinderVolume(value);
         }
+    }
+
+    public void Die()
+    {
+        animator.SetBool("dead",true);
+        gameObject.layer =8;
+        Camera.main.transform.SetParent(null);
+
+        LevelController.Current.GameOver();
     }
     public void CreateCylinder(float value)
     {
@@ -179,5 +197,16 @@ public class PlayerController : MonoBehaviour
         _spawningBridge = false;
 
     }
+    
+    public void PlayDropSound()
+    {
+        _dropSoundTimer -= Time.deltaTime;
+        if (_dropSoundTimer < 0)
+        {
+            _dropSoundTimer = 0.15f;
+            cylinderAudioSource.PlayOneShot(dropAudioClip,0.1f);
+        }
+    }
+
 
 }
